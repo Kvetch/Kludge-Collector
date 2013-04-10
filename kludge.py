@@ -7,14 +7,6 @@ sys.path.append('collector')
 import constants as constants
 import variables as var
 import collectstuff as collect
-# collect memory = -m
-# collect logs = -l
-# preliminary fast collection = -L1
-# deep collection = -L2
-# output directory = -o:directory
-# verbose = -v
-# encryption = -e:passphrase
-# help = -h
 
 if sys.version_info < (2, 6, 0) and sys.version_info > (3, 0, 0): # This probably isn't needed if we py2exe
     sys.stderr.write("A minimium of Python 2.6.0 is required.  Python 3.0.0 has not been fully tested.")
