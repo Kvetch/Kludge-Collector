@@ -28,19 +28,3 @@ class KludgeHasher():
             if not buf:
                 break
         return hasher.hexdigest()
-
-#[(fname, hashfile(open(fname, 'rb'), hashlib.sha256()) for fname in fnamelst]
-#
-#
-#
-#def md5Checksum(filePath):
-#    fh = open(filePath, 'rb')
-#    m = hashlib.md5()
-#    while True:
-#        data = fh.read(8192)
-#        if not data:
-#            break
-#        m.update(data)
-#    return m.hexdigest()
-#
-#print 'The MD5 checksum of text.txt is', md5Checksum('test.txt')

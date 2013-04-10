@@ -1,9 +1,7 @@
 import os, datetime
 from os import *
 
-
 # Should I set type on each one?
-
 class KludgeVars:
     def __init__(self):
         global now

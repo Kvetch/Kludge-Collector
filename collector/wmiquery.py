@@ -1,9 +1,10 @@
 import subprocess, os
 import sys
-import variables as	var
+import variables as var
 import logger as log
-import variables as	var
+import variables as var
 import wmi
+
 
 class KludgeWmi():
 	"""	WMI	Queries"""
@@ -146,3 +147,4 @@ for	objItem	in colItems:
 	print "System Variable:	", objItem.SystemVariable
 	print "User	Name: ", objItem.UserName
 	print "Variable	Value: ", objItem.VariableValue
+
