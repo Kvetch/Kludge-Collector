@@ -4,8 +4,8 @@ import logger as log
 
 class CmdLnr(object):
 
-	def	__init__(self):
-		self = self
+    def __init__(self):
+        self = self
     
     def run_acmd(self,cmdargs,ofile):
         self = self
@@ -28,7 +28,7 @@ class CmdLnr(object):
             # for line in proc.stdout:
             if var.verbose:
                 print("Running the command " + cmdargs + " outputting to " + _ofile)            
-            self.outputfile.writelines(proc.communicate())
+            self.outputfile.writelines(proc.communicate()) # Should we comma delim output?
 #            if proc.returncode != 0:
 #                var.errorlog = open(var.outputdir + "/" + var.err_file, "a")
 #                var.errorlog.writelines(proc.communicate())
