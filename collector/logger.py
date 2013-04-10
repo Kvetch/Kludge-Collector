@@ -20,6 +20,7 @@ class KludgeLogger():
         # add hdlr to logger
         logger.addHandler(hdlr)
         logger.debug
-        
+
+# Can't even remember why I put this in here
 if __name__ == '__main__':
     sys.exit(main())

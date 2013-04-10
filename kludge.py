@@ -8,6 +8,7 @@ import constants as constants
 import variables as var
 import collectstuff as collect
 
+
 if sys.version_info < (2, 6, 0) and sys.version_info > (3, 0, 0): # This probably isn't needed if we py2exe
     sys.stderr.write("A minimium of Python 2.6.0 is required.  Python 3.0.0 has not been fully tested.")
     sys.exit(1)

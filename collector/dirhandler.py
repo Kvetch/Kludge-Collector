@@ -17,7 +17,7 @@ class DirHandler(object):
             if not os.path.exists(var.outputdir):
                 os.makedirs(var.outputdir)
             else: # If the dir exists, delete it and then create a blank one
-                shutil.rmtree(var.outputdir) # Is this slow?
+                shutil.rmtree(var.outputdir) # Is this slow???
                 os.makedirs(var.outputdir)
             self.create_subdirs()
             self.create_errorlog()

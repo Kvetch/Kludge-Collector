@@ -1,7 +1,7 @@
 import os, datetime
 from os import *
 
-# Should I set type on each one?
+# Should I type cast each one?
 class KludgeVars:
     def __init__(self):
         global now

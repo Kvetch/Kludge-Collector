@@ -32,7 +32,8 @@ class CollectStuff(object):
         command.run_acmd("net use", "Network\\netbios.txt")
         command.run_acmd("nbtstat -nrSsc", "Network\\NBTStat.txt")
         command.run_acmd("net sessions", "Network\\netbios-sessions.txt")
-        # Hashing test
+
+# Hashing test
         hashit = hasher.KludgeHasher()
         hashit.dirhasher("C:\\Users\\")
         

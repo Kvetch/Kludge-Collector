@@ -17,7 +17,6 @@ class KludgeHasher():
                 _filename = os.path.join(r, files)
                 print _filename
                 print 'The Hash of ' + _filename + ' is ', self.hashfile(_filename, hashlib.md5())
-
             
     def hashfile(self, filename, hasher, blocksize=65536):
         afile = open(str(filename), 'rb')

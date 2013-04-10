@@ -2,6 +2,7 @@ import subprocess, os
 import variables as var
 import logger as log
 
+# Still needs work.  No clue on the best method to handle the buffer and stdout
 class CmdLnr(object):
 
     def __init__(self):

@@ -5,12 +5,12 @@ import logger as log
 import variables as var
 import wmi
 
-
+# Not sure if we should create a class that accepts class, namespace and properties as args
 class KludgeWmi():
 	"""	WMI	Queries"""
 	def	__init__(self):
 		self = self
-		w =	wmi.WMI(find_classes=False)	# Disable lookups for all the classes in the namespace
+		w =	wmi.WMI(find_classes=False) # Disable lookups for all the classes in the namespace
 		
 	def	os_info(self):
 		"""	Collect	OS and Machine Information """
