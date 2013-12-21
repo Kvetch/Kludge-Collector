@@ -146,7 +146,7 @@ class MFT:
 			print type(length)
 			print('LENGTH\n'+self.hexdump(length))
 			length=int(binascii.hexlify(length),16)
-				
+			
 			
 			hexoffset=dataruns[decodePos +runlength:decodePos+offset+runlength][::-1]
 			print('HEXOFFSET\n' +self.hexdump(hexoffset))

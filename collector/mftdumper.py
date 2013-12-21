@@ -33,6 +33,7 @@ class MFT:
 		bytesPerSector=ntfsfile.read(wordsize)
 		bytesPerSector=struct.unpack('<h', binascii.unhexlify(binascii.hexlify(bytesPerSector)))[0]
 
+		
 		#sectors per cluster
 
 		ntfsfile.seek(0x0d) # 13 bytes in
