@@ -17,16 +17,48 @@ class MFT:
 		wordsize=2
 		global dwordsize
 		dwordsize=4
-		self.open_mftfile()
+		self.open_drive()
 		
-	def open_mftfile(self):
-		global mftfile
-		mftfile = open('\\\\.\\\\C:\\dev\\MFTtest.dat', 'rb')
-		mftfile.seek(0)
+	def open_drive(self):
+		print("Hello")
+		global ntfsdrive
+		ntfsdrive = open('\\\\.\\\\C:', 'rb')
+		ntfs = ntfsdrive.read(512)
+		ntfsfile = StringIO(ntfs)
+		
+		#parse the MBR for this drive to get the bytes per sector,sectors per cluster and MFT location. 
+		#bytes per sector
+		ntfsfile.seek(0x0b) # 11 bytes in
+		global bytesPerSector
+		bytesPerSector=ntfsfile.read(wordsize)
+		bytesPerSector=struct.unpack('<h', binascii.unhexlify(binascii.hexlify(bytesPerSector)))[0]
+
+		#sectors per cluster
+
+		ntfsfile.seek(0x0d) # 13 bytes in
+		global sectorsPerCluster
+		sectorsPerCluster=ntfsfile.read(bytesize)
+		sectorsPerCluster=struct.unpack('<b', binascii.unhexlify(binascii.hexlify(sectorsPerCluster)))[0]
+
+
+		#get mftlogical cluster number
+		ntfsfile.seek(0x30) # 48 bytes in
+		cno=ntfsfile.read(longlongsize)
+		global mftClusterNumber
+		mftClusterNumber=struct.unpack('<q', binascii.unhexlify(binascii.hexlify(cno)))[0]
+
+		self.debug('%d %d %d'%(bytesPerSector,sectorsPerCluster,mftClusterNumber))
+
+		#MFT is then at NTFS + (bytesPerSector*sectorsPerCluster*mftClusterNumber)
+		global mftloc
+		mftloc=long(bytesPerSector*sectorsPerCluster*mftClusterNumber)	 
+		print mftloc
+		ntfsdrive.seek(0)
+		ntfsdrive.seek(mftloc)
 		mftcount = 1
 		mftsize = 1024
 		mftentry = mftcount * mftsize
-		self.mftraw=mftfile.read(mftentry)
+		self.mftraw=ntfsdrive.read(mftentry)
 		self.analyzeATRs()
 
 	#utility functions for printing data as self.hexdumps
@@ -46,6 +78,7 @@ class MFT:
 		return s.lower()
 
 
+
 	def hexprint(self, xs):
 		xs = xs
 		def chrc(c):
@@ -58,6 +91,7 @@ class MFT:
 			return ordc(c) in range(32,127) if isinstance(c,str) else c > 31
 		
 		return ''.join([chrc(x) if isprint(x) else '.' for x in xs])
+
 
 
 	def hexdump(self,xs, group_size=4, byte_separator=' ', group_separator='-', printable_separator='  ', address=0, address_format='%04X', line_size=16):
@@ -90,6 +124,7 @@ class MFT:
 		if( (val&(1<<(bits-1))) != 0 ):
 			val = val - (1<<bits)
 		return val
+
 
 
 	def decodeATRHeader(self,s):
@@ -157,7 +192,33 @@ class MFT:
 			header=dataruns[decodePos]
 			#break
 			
-	def decodeFileNameAttrib(self,s):
+	def decodeFileNameContent(self,s):
+			# decodePos=0
+			# header=s[decodePos]
+			# while header !='\x00':
+				# print(header)
+				# print('HEADER\n' + self.hexdump(header))
+				# offset=int(binascii.hexlify(header)[0])
+				# runlength=int(binascii.hexlify(header)[1])
+				# print('OFFSET %d LENGTH %d' %( offset,runlength))
+				# #move into the length data for the run
+				# decodePos+=1
+				# print(decodePos,runlength)
+				# length=s[decodePos:decodePos +int(runlength)][::-1]
+				# print(length)
+				# print type(length)
+				# print('LENGTH\n'+self.hexdump(length))
+				# length=int(binascii.hexlify(length),16)
+					
+				
+				# hexoffset=s[decodePos +runlength:decodePos+offset+runlength][::-1]
+				# print('HEXOFFSET\n' +self.hexdump(hexoffset))
+				# cluster=self.twos_comp(int(binascii.hexlify(hexoffset),16),offset*8)
+				
+				# yield(length,cluster)
+				# decodePos=decodePos + offset+runlength
+				# header=s[decodePos]
+	
 			f = {}
 			f['parentdir'] = struct.unpack("<Q",s[:8])[0]
 			print("Parent Directory is " + hex(f['parentdir']))
@@ -181,7 +242,7 @@ class MFT:
 				f['reparse'] = 0
 			print("Reparse Value ", f['reparse'])
 			f['namelen'] = struct.unpack("<B",s[64])[0]
-			print("Name Length ", f['namelen']) # Take this hex value x2
+			print("Name Length ", f['namelen'])
 			f['nametype'] = struct.unpack("<B",s[65])[0]
 			print("Name Type - 3=Win32DOSCompat,2=DOS,1=Win32,0=Posix ", f['nametype'])
 			#f['name'] = s[66:70][2]
@@ -211,55 +272,6 @@ class MFT:
 		#except:
 			#f['name'] = "MFTREADINGERROR"
 			print("Name ", f['name'])
-
-	def decodeSIRecord(self,s):
-			si = {}
-			si['datecrt'] = struct.unpack("<Q",s[0:8])[0]
-			print("Date Creation is " + str(si['datecrt']))
-			si['filealt'] = struct.unpack("<Q",s[8:16])[0]
-			print("File Altered ", si['filealt'])
-			si['filemftalt'] = struct.unpack("<Q",s[16:24])[0]
-			print("File MFT Altered ", si['filemftalt'])
-			si['fileacs'] = struct.unpack("<Q",s[24:32])[0]
-			print("File Accessed ", si['fileacs'])
-			si['flags'] = struct.unpack("<Q",s[32:36])[0]0
-			print("Flags ", si['flags'])
-			si['maxnumvers'] = struct.unpack("<Q",s[36:40])[0]
-			print("Max Number of Versions ", si['maxnumvers'])
-			si['vernum'] = struct.unpack("<I",s[40:44])[0]
-			print("Version Number ", si['vernum'])
-************************************************************************
-			si['namelen'] = struct.unpack("<B",s[64])[0]
-			print("Name Length ", si['namelen'])
-			si['nametype'] = struct.unpack("<B",s[65])[0]
-			print("Name Type - 3=Win32DOSCompat,2=DOS,1=Win32,0=Posix ", si['nametype'])
-			#si['name'] = s[66:70][2]
-		#try:
-			i=0
-			si['name'] = ""
-			ReadPtr=0
-			mftDict={}		
-			mftDict['attr_off'] = struct.unpack("<H",self.mftraw[20:22])[0]
-			ReadPtr=mftDict['attr_off']
-			ATRrecord = self.decodeATRHeader(self.mftraw[ReadPtr:])
-			while i < si['namelen']*2:
-
-				## namelocrun = 66 + i
-				## temp = struct.unpack("<s",s[namelocrun])[0]
-				## si['name'] += temp
-				## i+=1
-				## print(si['name'])
-				
-				namelocrun = 66 + i
-				temp = struct.unpack("<s",s[namelocrun])[0]
-				si['name'] += temp
-				i+=1
-				print(si['name'])			
-				
-				
-		#except:
-			#si['name'] = "MFTREADINGERROR"
-			print("Name ", si['name'])
 			
 	def debug(self,message):
 		sys.stderr.write(message +'\n')
@@ -286,26 +298,26 @@ class MFT:
 				
 				filenamecontent=self.mftraw[ReadPtr+ATRrecord['soff']:ReadPtr+ATRrecord['len']]
 				
-				# # for length,cluster in self.decodeFileNameContent(filenamecontent):
-					# # # # # self.debug('%d %d'%(length,cluster))
-						# # # # # self.debug('drivepos: %d'%(mftfile.tell()))
-						# # print(filenamecontent['parentdir'])
+				for length,cluster in self.decodeFileNameContent(filenamecontent):
+					# self.debug('%d %d'%(length,cluster))
+					# self.debug('drivepos: %d'%(ntfsdrive.tell()))
+					print(filenamecontent['parentdir'])
+					
+					# if prevCluster==None:	 
+						# ntfsdrive.seek(cluster*bytesPerSector*sectorsPerCluster)
+						# prevSeek=ntfsdrive.tell()
+						# #mftfile.writelines(ntfsdrive.read(length*bytesPerSector*sectorsPerCluster))
+						# prevCluster=cluster
+					# else:
+						# ntfsdrive.seek(prevSeek)
+						# newpos=prevSeek + (cluster*bytesPerSector*sectorsPerCluster)
+						# self.debug('seekpos: %d'%(newpos))
+						# ntfsdrive.seek(newpos)
+						# prevSeek=ntfsdrive.tell()					 
+						# #mftfile.writelines(ntfsdrive.read(length*bytesPerSector*sectorsPerCluster))
+						# prevCluster=cluster	
 						
-						# if prevCluster==None:	 
-							# mftfile.seek(cluster*bytesPerSector*sectorsPerCluster)
-							# prevSeek=mftfile.tell()
-							# #mftfile.writelines(mftfile.read(length*bytesPerSector*sectorsPerCluster))
-							# prevCluster=cluster
-						# else:
-							# mftfile.seek(prevSeek)
-							# newpos=prevSeek + (cluster*bytesPerSector*sectorsPerCluster)
-							# self.debug('seekpos: %d'%(newpos))
-							# mftfile.seek(newpos)
-							# prevSeek=mftfile.tell()					 
-							# #mftfile.writelines(mftfile.read(length*bytesPerSector*sectorsPerCluster))
-							# prevCluster=cluster	
-							
-					## break
+				break
 			
 			if ATRrecord['type'] == 0x80:
 				print("Type is 80, $data---true")
@@ -315,27 +327,27 @@ class MFT:
 				print("dataruns " +  dataruns)
 				prevCluster=None
 				prevSeek=0
-				outputfile = open('C:\\dev\\test2.dat', "wb")		
+				mftfile = open('C:\\dev\\test.dat', "wb")		
 				
 				for length,cluster in self.decodeDataRuns(dataruns):
 					self.debug('%d %d'%(length,cluster))
-					self.debug('drivepos: %d'%(mftfile.tell()))
+					self.debug('drivepos: %d'%(ntfsdrive.tell()))
 					
 					if prevCluster==None:	 
-						outputfile.seek(cluster*bytesPerSector*sectorsPerCluster)
-						prevSeek=outputfile.tell()
-						outputfile.writelines(mftfile.read(length*bytesPerSector*sectorsPerCluster))
+						ntfsdrive.seek(cluster*bytesPerSector*sectorsPerCluster)
+						prevSeek=ntfsdrive.tell()
+						mftfile.writelines(ntfsdrive.read(length*bytesPerSector*sectorsPerCluster))
 						prevCluster=cluster
 					else:
-						outputfile.seek(prevSeek)
+						ntfsdrive.seek(prevSeek)
 						newpos=prevSeek + (cluster*bytesPerSector*sectorsPerCluster)
 						self.debug('seekpos: %d'%(newpos))
-						outputfile.seek(newpos)
-						prevSeek=outputfile.tell()					 
-						outputfile.writelines(mftfile.read(length*bytesPerSector*sectorsPerCluster))
+						ntfsdrive.seek(newpos)
+						prevSeek=ntfsdrive.tell()					 
+						mftfile.writelines(ntfsdrive.read(length*bytesPerSector*sectorsPerCluster))
 						prevCluster=cluster				   
-				outputfile.close
-				##break
+				mftfile.close
+				break
 			
 
 			if ATRrecord['type'] == 0xffffffff:
